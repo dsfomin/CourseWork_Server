@@ -10,61 +10,36 @@ public class MyLocation implements Serializable {
     private static final ThreadLocal<BearingDistanceCache> sBearingDistanceCache = ThreadLocal
             .withInitial(BearingDistanceCache::new);
 
-    private double mLatitude = 0.0;
-    private double mLongitude = 0.0;
-    private double mAltitude = 0.0f;
+    private double mLatitude;
+    private double mLongitude;
+    private double mAltitude;
     private float mBearing = 0.0f;
 
-    public MyLocation(double latitude, double longitude, double altitude) {
+    private int refId;
+
+    public MyLocation(double latitude, double longitude, double altitude, int refId) {
         mLatitude = latitude;
         mLongitude = longitude;
         mAltitude = altitude;
+        this.refId = refId;
     }
 
-    public MyLocation(LocationDTO loc) {
-        mAltitude = loc.getAltitude();
+    public MyLocation(LocationDTO loc, int refId) {
+        mLatitude = loc.getLatitude();
         mLongitude = loc.getLongitude();
         mAltitude = loc.getAltitude();
         mBearing = loc.getBearing();
+        this.refId = refId;
     }
 
-    public static String convert(double coordinate) {
-        if (coordinate < -180.0 || coordinate > 180.0 ||
-                Double.isNaN(coordinate)) {
-            throw new IllegalArgumentException("coordinate=" + coordinate);
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        // Handle negative values
-        if (coordinate < 0) {
-            sb.append('-');
-            coordinate = -coordinate;
-        }
-
-        DecimalFormat df = new DecimalFormat("###.#####");
-
-        int degrees = (int) Math.floor(coordinate);
-        sb.append(degrees);
-        sb.append(':');
-        coordinate -= degrees;
-        coordinate *= 60.0;
-
-        int minutes = (int) Math.floor(coordinate);
-        sb.append(minutes);
-        sb.append(':');
-        coordinate -= minutes;
-        coordinate *= 60.0;
-
-        sb.append(df.format(coordinate));
-        return sb.toString();
+    public LocationDTO myLocationToDTO() {
+        return new LocationDTO(mLatitude, mLongitude, mAltitude);
     }
 
 
     private static void computeDistanceAndBearing(double lat1, double lon1,
                                                   double lat2, double lon2, BearingDistanceCache results) {
         // Based on http://www.ngs.noaa.gov/PUBS_LIB/inverse.pdf
-        // using the "Inverse Formula" (section 4)
 
         int MAXITERS = 20;
         // Convert lat/long to radians
@@ -92,10 +67,10 @@ public class MyLocation implements Serializable {
 
         double sigma = 0.0;
         double deltaSigma = 0.0;
-        double cosSqAlpha = 0.0;
-        double cos2SM = 0.0;
-        double cosSigma = 0.0;
-        double sinSigma = 0.0;
+        double cosSqAlpha;
+        double cos2SM;
+        double cosSigma;
+        double sinSigma;
         double cosLambda = 0.0;
         double sinLambda = 0.0;
 
@@ -182,8 +157,7 @@ public class MyLocation implements Serializable {
         BearingDistanceCache cache = sBearingDistanceCache.get();
         if (mLatitude != cache.mLat1 || mLongitude != cache.mLon1 ||
                 dest.mLatitude != cache.mLat2 || dest.mLongitude != cache.mLon2) {
-            computeDistanceAndBearing(mLatitude, mLongitude,
-                    dest.mLatitude, dest.mLongitude, cache);
+            computeDistanceAndBearing(mLatitude, mLongitude, dest.mLatitude, dest.mLongitude, cache);
         }
         return cache.mDistance;
     }
@@ -246,7 +220,15 @@ public class MyLocation implements Serializable {
                 '}';
     }
 
-    private static class BearingDistanceCache implements Serializable{
+    public int getRefId() {
+        return refId;
+    }
+
+    public void setRefId(int refId) {
+        this.refId = refId;
+    }
+
+    private static class BearingDistanceCache implements Serializable {
         private double mLat1 = 0.0;
         private double mLon1 = 0.0;
         private double mLat2 = 0.0;

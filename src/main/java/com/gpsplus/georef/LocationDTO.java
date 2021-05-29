@@ -3,13 +3,13 @@ package com.gpsplus.georef;
 import java.io.Serializable;
 
 public class LocationDTO implements Serializable {
-    private double mLatitude = 0.0;
-    private double mLongitude = 0.0;
-    private double mAltitude = 0.0f;
+    private double mLatitude;
+    private double mLongitude;
+    private double mAltitude;
     private float mBearing = 0.0f;
 
     public LocationDTO(double latitude, double longitude, double altitude) {
-        mAltitude = latitude;
+        mLatitude = latitude;
         mLongitude = longitude;
         mAltitude = altitude;
     }
